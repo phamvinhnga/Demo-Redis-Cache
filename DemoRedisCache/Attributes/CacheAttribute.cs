@@ -1,6 +1,7 @@
 ﻿using DemoRedisCache.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using System.Net.Mime;
 using System.Text;
 
 namespace DemoRedisCache.Attributes
@@ -28,7 +29,7 @@ namespace DemoRedisCache.Attributes
                     var contentResult = new ContentResult
                     {
                         Content = cacheResponse,
-                        ContentType = "application/json",
+                        ContentType = MediaTypeNames.Application.Json,
                         StatusCode = StatusCodes.Status200OK
                     };
                     context.Result = contentResult;
