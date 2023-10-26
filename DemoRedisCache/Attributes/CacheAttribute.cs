@@ -9,6 +9,7 @@ namespace DemoRedisCache.Attributes
     public class CacheAttribute : Attribute, IAsyncActionFilter
     {
         private readonly int _timeToLiveSecounds;
+        private ICacheService _cacheService;
 
         public CacheAttribute(int timeToLiveSecounds = 100)
         {
@@ -17,31 +18,58 @@ namespace DemoRedisCache.Attributes
 
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            var cacheService = context.HttpContext.RequestServices.GetService<ICacheService>();
+            _cacheService = context.HttpContext.RequestServices.GetService<ICacheService>();
+
             var cacheKey = GennerateCacheKey(context.HttpContext.Request);
 
-            if (!string.IsNullOrWhiteSpace(cacheKey) && cacheService != null)
+            var isSuccess = await GetCacheResponseAsync(cacheKey, context);
+            if(!isSuccess)
             {
-                var cacheResponse = await cacheService.GetAsync(cacheKey);
+                var excutedContext = await next();
+                await SetCacheResponseAsync(cacheKey, excutedContext);
+            }
+        }
 
-                if (!string.IsNullOrEmpty(cacheResponse))
+        private async Task<bool> GetCacheResponseAsync(string cacheKey, ActionExecutingContext context)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(cacheKey) && _cacheService != null)
                 {
-                    var contentResult = new ContentResult
+                    var cacheResponse = await _cacheService.GetAsync(cacheKey);
+
+                    if (!string.IsNullOrEmpty(cacheResponse))
                     {
-                        Content = cacheResponse,
-                        ContentType = MediaTypeNames.Application.Json,
-                        StatusCode = StatusCodes.Status200OK
-                    };
-                    context.Result = contentResult;
-                    return;
+                        var contentResult = new ContentResult
+                        {
+                            Content = cacheResponse,
+                            ContentType = MediaTypeNames.Application.Json,
+                            StatusCode = StatusCodes.Status200OK
+                        };
+                        context.Result = contentResult;
+                        return true;
+                    }
                 }
             }
-
-            var excutedContext = await next();
-
-            if(!string.IsNullOrWhiteSpace(cacheKey) && cacheService != null && excutedContext.Result is OkObjectResult objectResult && objectResult.Value != null)
+            catch (Exception ex)
             {
-                await cacheService.SetAsync(cacheKey, objectResult.Value, TimeSpan.FromSeconds(_timeToLiveSecounds));
+                Console.WriteLine(ex);
+            }
+            return false;
+        }
+
+        private async Task SetCacheResponseAsync(string cacheKey, ActionExecutedContext? excutedContext)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(cacheKey) && _cacheService != null && excutedContext != null && excutedContext.Result is OkObjectResult objectResult && objectResult.Value != null)
+                {
+                    await _cacheService.SetAsync(cacheKey, objectResult.Value, TimeSpan.FromSeconds(_timeToLiveSecounds));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
             }
         }
 

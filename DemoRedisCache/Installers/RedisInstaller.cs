@@ -9,21 +9,26 @@ namespace DemoRedisCache.Installers
     {
         public void InstallServices(IServiceCollection services, IConfiguration configuration)
         {
-            var redisConfiguration = new RedisConfiguration();
-            configuration.GetSection("RedisConfiguration").Bind(redisConfiguration);
-
-            services.AddSingleton(redisConfiguration);
-
-            if (!string.IsNullOrEmpty(redisConfiguration.ConnectionString))
+            try
             {
-                _ = services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(configuration: redisConfiguration.ConnectionString));
-                services.AddStackExchangeRedisCache(options =>
-                {
-                    options.Configuration = redisConfiguration.ConnectionString;
-                });
+                var redisConfiguration = new RedisConfiguration();
+                configuration.GetSection("RedisConfiguration").Bind(redisConfiguration);
 
-                services.AddSingleton<ICacheService, CacheService>();
+                services.AddSingleton(redisConfiguration);
+
+                if (!string.IsNullOrEmpty(redisConfiguration.ConnectionString))
+                {
+                    _ = services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(configuration: redisConfiguration.ConnectionString));
+                    services.AddStackExchangeRedisCache(options =>
+                    {
+                        options.Configuration = redisConfiguration.ConnectionString;
+                    });
+
+                    services.AddSingleton<ICacheService, CacheService>();
+                }
             }
+            catch { }
+
         }
     }
 }
