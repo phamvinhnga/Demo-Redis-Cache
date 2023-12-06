@@ -1,4 +1,5 @@
 ﻿
+using DemoRedisCache.Context;
 using DemoRedisCache.Services;
 using StackExchange.Redis;
 using StackExchange.Redis.Extensions.Core.Configuration;
@@ -9,25 +10,27 @@ namespace DemoRedisCache.Installers
     {
         public void InstallServices(IServiceCollection services, IConfiguration configuration)
         {
-            try
-            {
-                var redisConfiguration = new RedisConfiguration();
-                configuration.GetSection("RedisConfiguration").Bind(redisConfiguration);
+            services.AddSingleton<IRedisConnectionMultiplexer, RedisConnectionMultiplexer>();
 
-                services.AddSingleton(redisConfiguration);
+            //try
+            //{
+            //    var redisConfiguration = new RedisConfiguration();
+            //    configuration.GetSection("RedisConfiguration").Bind(redisConfiguration);
 
-                if (!string.IsNullOrEmpty(redisConfiguration.ConnectionString))
-                {
-                    _ = services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(configuration: redisConfiguration.ConnectionString));
-                    services.AddStackExchangeRedisCache(options =>
-                    {
-                        options.Configuration = redisConfiguration.ConnectionString;
-                    });
+            //    services.AddSingleton(redisConfiguration);
 
-                    services.AddSingleton<ICacheService, CacheService>();
-                }
-            }
-            catch { }
+            //    if (!string.IsNullOrEmpty(redisConfiguration.ConnectionString))
+            //    {
+            //        _ = services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(configuration: redisConfiguration.ConnectionString));
+            //        services.AddStackExchangeRedisCache(options =>
+            //        {
+            //            options.Configuration = redisConfiguration.ConnectionString;
+            //        });
+
+            //        services.AddSingleton<ICacheService, CacheService>();
+            //    }
+            //}
+            //catch { }
 
         }
     }
