@@ -1,6 +1,7 @@
 ﻿using DemoRedisCache.Context;
 using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
+using System.Diagnostics.Metrics;
 
 namespace DemoRedisCache.Controllers
 {
@@ -14,6 +15,22 @@ namespace DemoRedisCache.Controllers
             IRedisConnectionMultiplexer redisConnectionMultiplexer)
         {
             _redisDatabase = redisConnectionMultiplexer.GetDatabase();
+        }
+
+        [HttpGet("zrange")]
+        public async Task<IActionResult> SortedSetRangeByRankAsync()
+        {
+            var result = await _redisDatabase.SortedSetRangeByRankWithScoresAsync(
+                "followers", 
+                start: 2,
+                stop: 5,
+                order: Order.Ascending);
+  
+            return Ok(result.Select(s => new
+            {
+                Score = s.Score,
+                Member = s.Element.ToString(),
+            }).ToList());
         }
 
         #region zincrby
