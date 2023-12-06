@@ -16,6 +16,23 @@ namespace DemoRedisCache.Controllers
             _redisDatabase = redisConnectionMultiplexer.GetDatabase();
         }
 
+        #region zincrby
+        [HttpGet("zincrby-Increment")]
+        public async Task<IActionResult> SortedSetIncrementAsync()
+        {
+            var result = await _redisDatabase.SortedSetIncrementAsync("followers", member: "98", value: 2);
+            return Ok(result);
+        }
+
+        [HttpGet("zincrby-decrement")]
+        public async Task<IActionResult> SortedSetDecrementAsync()
+        {
+            var result = await _redisDatabase.SortedSetDecrementAsync("followers", member: "98", value: 2);
+            return Ok(result);
+        }
+
+        #endregion zincrby
+
         [HttpGet("zmscore")]
         public async Task<IActionResult> SortedSetScoresAsync()
         {
@@ -68,7 +85,5 @@ namespace DemoRedisCache.Controllers
             Random random = new Random();
             return (double)random.Next(minValue, maxValue + 1);
         }
-
-
     }
 }
